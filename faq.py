@@ -1,22 +1,32 @@
 import os
 import streamlit as st
-import chromadb
+
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from groq import Groq
 import pandas as pd
 from dotenv import load_dotenv
-import logging
-import warnings
+
 
 # ---------- Silence warnings (clean logs) ----------
 warnings.filterwarnings("ignore")
 logging.getLogger("chromadb").setLevel(logging.ERROR)
 
 # ---------- Disable telemetry ----------
+
+
+# 🔥 HARD DISABLE TELEMETRY (must be before chromadb import)
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 os.environ["CHROMA_TELEMETRY"] = "False"
+os.environ["POSTHOG_DISABLED"] = "1"
+import logging
+import warnings
+
+warnings.filterwarnings("ignore")
+logging.getLogger("chromadb").setLevel(logging.CRITICAL)
+logging.getLogger("posthog").setLevel(logging.CRITICAL)
 
 # ---------- Load environment ----------
+import chromadb
 load_dotenv()
 
 # ---------- Embedding (NO sentence-transformers) ----------
