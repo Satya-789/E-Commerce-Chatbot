@@ -6,6 +6,11 @@ from groq import Groq
 import pandas as pd
 from dotenv import load_dotenv
 
+
+# 🔥 Disable telemetry completely
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY"] = "False"
+
 # ---------- Load Environment ----------
 load_dotenv()
 
