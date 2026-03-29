@@ -25,22 +25,17 @@ Schema:
 table: product
 
 columns:
-product_link (string)
-title (string)
-brand (string)
-price (integer)
-discount (float)
-avg_rating (float)
-total_ratings (integer)
+product_link, title, brand, price, discount, avg_rating, total_ratings
 
 Rules:
 - Always SELECT *
-- Use LIKE '%keyword%' for title or brand search
+- Use LIKE '%keyword%' for title and brand
 - Never use ILIKE
-- Return only SQL inside <SQL></SQL>
+- Always return SQL inside <SQL></SQL>
 
-Example:
+Examples:
 <SQL>SELECT * FROM product WHERE title LIKE '%shoes%'</SQL>
+<SQL>SELECT * FROM product WHERE brand LIKE '%puma%'</SQL>
 """
 
 # ---------- Generate SQL ----------
@@ -53,11 +48,10 @@ def generate_sql_query(question):
         model=GROQ_MODEL,
         temperature=0.2
     )
-
     return res.choices[0].message.content
 
 
-# ---------- Run Query ----------
+# ---------- Execute SQL ----------
 def run_query(query):
     if query.strip().upper().startswith("SELECT"):
         with sqlite3.connect(db_path) as conn:
@@ -66,10 +60,10 @@ def run_query(query):
 
 # ---------- MAIN CHAIN ----------
 def sql_chain(question):
-    # Step 1: Generate SQL
+    # 1. Generate SQL
     sql_text = generate_sql_query(question)
 
-    # Step 2: Extract SQL
+    # 2. Extract SQL
     match = re.findall(r"<SQL>(.*?)</SQL>", sql_text, re.DOTALL)
 
     if not match:
@@ -78,30 +72,29 @@ def sql_chain(question):
     query = match[0].strip()
     print("Generated SQL:", query)
 
-    # Step 3: Execute
+    # 3. Run query
     df = run_query(query)
 
     if df is None or df.empty:
         return "No products found."
 
-    # Step 4: Manual formatting (FIXES LINKS)
-    result = ""
+    # 4. Format output (THIS FIXES YOUR LINK ISSUE)
+    output = ""
 
     for i, row in df.iterrows():
         discount = int(row["discount"] * 100)
 
-        result += f"""
+        output += f"""
 {i+1}. {row['title']}
 💰 Price: Rs.{row['price']} ({discount}% off)
 ⭐ Rating: {row['avg_rating']}
-🔗 <a href="{row['product_link']}" target="_blank">View Product</a>
+🔗 <a href="{row['product_link']}" target="_blank">Buy Now</a>
 
 """
 
-    return result
+    return output
 
 
 # ---------- TEST ----------
 if __name__ == "__main__":
-    question = "Show top 3 shoes under 3000"
-    print(sql_chain(question))
+    print(sql_chain("show shoes under 2000"))
