@@ -21,8 +21,10 @@ def ask(query):
 
     if route == "faq":
         return faq_chain(query)
+
     elif route == "sql":
         return sql_chain(query)
+
     else:
         return "I can help with products, orders, and policies."
 
@@ -36,7 +38,7 @@ if "messages" not in st.session_state:
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        st.markdown(msg["content"], unsafe_allow_html=True)
 
 if query:
     st.session_state.messages.append({"role": "user", "content": query})
@@ -50,4 +52,4 @@ if query:
     st.session_state.messages.append({"role": "assistant", "content": response})
 
     with st.chat_message("assistant"):
-        st.markdown(response)
+        st.markdown(response, unsafe_allow_html=True)
