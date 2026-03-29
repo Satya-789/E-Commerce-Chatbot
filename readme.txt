@@ -2,18 +2,35 @@
 
 ## 📌 Overview
 
-This project is an AI-powered E-commerce chatbot built using **Streamlit, Groq LLM, ChromaDB, and SQLite**.
-It can answer FAQs and help users search for products using natural language.
+An intelligent **AI-powered E-commerce chatbot** built using **Streamlit, Groq LLM, ChromaDB, and SQLite**.
+It allows users to interact in natural language to:
+
+* 📚 Get instant answers to FAQs
+* 🛍️ खोज and discover products effortlessly
 
 ---
 
 ## 🚀 Features
 
-* 🤖 AI chatbot interface (Streamlit)
-* 📦 Product search using natural language → converted to SQL
-* 📚 FAQ answering using vector database (ChromaDB)
-* 🔗 Clickable product links
-* ⚡ Fast and lightweight (no heavy ML models required)
+✨ **Smart Conversational UI**
+
+> Chat-based interface powered by Streamlit
+
+🔎 **Natural Language Product Search**
+
+> Converts user queries into SQL automatically
+
+📚 **FAQ Intelligence (RAG-based)**
+
+> Uses ChromaDB for semantic search
+
+🔗 **Clickable Product Links**
+
+> Direct navigation to products
+
+⚡ **Lightweight & Fast**
+
+> No heavy ML models → optimized for cloud deployment
 
 ---
 
@@ -32,80 +49,20 @@ ecommerce-chatbot/
 │   └── faq_data.csv     # FAQ dataset
 │
 ├── requirements.txt
-└── README.txt
+└── README.md
 ```
 
----
-
-## ⚙️ Installation
-
-### 1. Clone the repository
-
-```
-git clone https://github.com/your-username/ecommerce-chatbot.git
-cd ecommerce-chatbot
-```
-
-### 2. Install dependencies
-
-```
-pip install -r requirements.txt
-```
-
----
-
-## 🔐 Environment Variables
-
-Create a `.env` file:
-
-```
-GROQ_API_KEY=your_api_key_here
-GROQ_MODEL=llama-3.1-8b-instant
-```
-
----
-
-## 🗄️ Database Setup
-
-Run this once to create and insert sample data:
-
-```
-python setup_db.py
-```
-
-OR manually ensure:
-
-* Table name: `product`
-* Columns:
-
-  * product_link
-  * title
-  * brand
-  * price
-  * discount
-  * avg_rating
-  * total_ratings
-
----
-
-## ▶️ Run the App
-
-```
-streamlit run main.py
-```
-
----
 ---
 
 ## 💡 Example Queries
 
-### FAQ
+### 📚 FAQ Queries
 
-* What is return policy?
+* What is your return policy?
 * Do you accept cash on delivery?
 * How can I track my order?
 
-### Product Search
+### 🛍️ Product Queries
 
 * Show shoes under 2000
 * Nike shoes with discount
@@ -113,17 +70,31 @@ streamlit run main.py
 
 ---
 
----
-
 ## 🛠️ Tech Stack
 
-* Streamlit
-* Groq LLM
-* ChromaDB
-* SQLite
-* Pandas
+| Layer      | Technology     |
+| ---------- | -------------- |
+| Frontend   | Streamlit      |
+| LLM        | Groq (LLaMA 3) |
+| Vector DB  | ChromaDB       |
+| Database   | SQLite         |
+| Data Tools | Pandas         |
 
 ---
-Link - https://e-commerce-chatbot-n.streamlit.app/
 
+## 🌐 Live Demo
+
+🔗 **Try it here:**
+👉 https://e-commerce-chatbot-n.streamlit.app/
+
+---
+
+## 🎯 Key Highlights
+
+* 💬 End-to-end conversational AI system
+* ⚡ Fast response using Groq LLM
+* 🧠 Hybrid architecture (RAG + SQL)
+* ☁️ Fully deployable on Streamlit Cloud
+
+---
 
