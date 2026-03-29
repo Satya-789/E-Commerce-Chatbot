@@ -5,29 +5,37 @@ from groq import Groq
 import pandas as pd
 from dotenv import load_dotenv
 
+# ---------- Load env ----------
 load_dotenv()
 
+# ---------- Embedding ----------
 ef = embedding_functions.SentenceTransformerEmbeddingFunction(
     model_name='sentence-transformers/all-MiniLM-L6-v2'
 )
 
+# ---------- Chroma Client (FIXED) ----------
 chroma_client = chromadb.Client(
     chromadb.config.Settings(
-        persist_directory="./chroma_db"
+        persist_directory="./chroma_db",
+        anonymized_telemetry=False   # ✅ FIX: disable telemetry error
     )
 )
 
+# ---------- Groq ----------
 groq_client = Groq()
+
 collection_name_faq = 'faqs'
 
-
+# ---------- Ingest FAQ ----------
 def ingest_faq_data(path):
     existing = [c.name for c in chroma_client.list_collections()]
+
     if collection_name_faq not in existing:
         collection = chroma_client.create_collection(
             name=collection_name_faq,
             embedding_function=ef
         )
+
         df = pd.read_csv(path)
 
         collection.add(
@@ -35,17 +43,24 @@ def ingest_faq_data(path):
             metadatas=[{'answer': a} for a in df['answer']],
             ids=[str(i) for i in range(len(df))]
         )
+
         chroma_client.persist()
 
 
+# ---------- Retrieve ----------
 def get_relevant_qa(query):
     collection = chroma_client.get_collection(
         name=collection_name_faq,
         embedding_function=ef
     )
-    return collection.query(query_texts=[query], n_results=3)
+
+    return collection.query(
+        query_texts=[query],
+        n_results=3
+    )
 
 
+# ---------- Generate Answer ----------
 def generate_answer(query, context):
     prompt = f"""
 You are an ecommerce assistant.
@@ -59,13 +74,18 @@ CONTEXT:
 QUESTION:
 {query}
 """
+
     completion = groq_client.chat.completions.create(
         model=os.environ['GROQ_MODEL'],
-        messages=[{"role": "user", "content": prompt}]
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
+
     return completion.choices[0].message.content
 
 
+# ---------- Chain ----------
 def faq_chain(query):
     result = get_relevant_qa(query)
 
