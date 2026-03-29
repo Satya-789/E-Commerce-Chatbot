@@ -1,38 +1,32 @@
 import os
-import streamlit as st
 
+# ---------- 🔥 MUST BE FIRST (disable telemetry) ----------
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY"] = "False"
+os.environ["POSTHOG_DISABLED"] = "1"
+
+# ---------- Imports ----------
+import streamlit as st
+import chromadb
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from groq import Groq
 import pandas as pd
 from dotenv import load_dotenv
-
-
-# ---------- Silence warnings (clean logs) ----------
-warnings.filterwarnings("ignore")
-logging.getLogger("chromadb").setLevel(logging.ERROR)
-
-# ---------- Disable telemetry ----------
-
-
-# 🔥 HARD DISABLE TELEMETRY (must be before chromadb import)
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
-os.environ["CHROMA_TELEMETRY"] = "False"
-os.environ["POSTHOG_DISABLED"] = "1"
 import logging
 import warnings
 
+# ---------- Silence logs ----------
 warnings.filterwarnings("ignore")
 logging.getLogger("chromadb").setLevel(logging.CRITICAL)
 logging.getLogger("posthog").setLevel(logging.CRITICAL)
 
-# ---------- Load environment ----------
-import chromadb
+# ---------- Load env ----------
 load_dotenv()
 
-# ---------- Embedding (NO sentence-transformers) ----------
+# ---------- Embedding ----------
 ef = DefaultEmbeddingFunction()
 
-# ---------- Cached Chroma Client (FIXED) ----------
+# ---------- Cached Chroma Client ----------
 @st.cache_resource
 def get_chroma_client():
     return chromadb.Client(
@@ -44,10 +38,9 @@ def get_chroma_client():
 
 # ---------- Groq Client ----------
 groq_client = Groq()
-
 collection_name_faq = "faqs"
 
-# ---------- Ingest FAQ Data ----------
+# ---------- Ingest ----------
 def ingest_faq_data(path):
     chroma_client = get_chroma_client()
 
@@ -69,8 +62,7 @@ def ingest_faq_data(path):
 
         chroma_client.persist()
 
-
-# ---------- Retrieve Relevant FAQs ----------
+# ---------- Retrieve ----------
 def get_relevant_qa(query):
     chroma_client = get_chroma_client()
 
@@ -84,14 +76,15 @@ def get_relevant_qa(query):
         n_results=3
     )
 
-
 # ---------- Generate Answer ----------
 def generate_answer(query, context):
+    model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+
     prompt = f"""
 You are an ecommerce assistant.
 
 Answer ONLY using the context.
-If the answer is not found, say "I don't know".
+If not found, say "I don't know".
 
 CONTEXT:
 {context}
@@ -101,17 +94,14 @@ QUESTION:
 """
 
     completion = groq_client.chat.completions.create(
-        model=os.environ["GROQ_MODEL"],
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.2
     )
 
     return completion.choices[0].message.content
 
-
-# ---------- FAQ Chain ----------
+# ---------- Chain ----------
 def faq_chain(query):
     result = get_relevant_qa(query)
 
