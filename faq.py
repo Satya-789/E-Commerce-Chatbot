@@ -1,6 +1,6 @@
 import os
 
-# Disable telemetry FIRST
+# Disable telemetry
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 os.environ["CHROMA_TELEMETRY"] = "False"
 os.environ["POSTHOG_DISABLED"] = "1"
@@ -30,10 +30,14 @@ collection_name_faq = "faqs"
 
 def ingest_faq_data(path):
     client = get_chroma_client()
+
     existing = [c.name for c in client.list_collections()]
 
     if collection_name_faq not in existing:
-        collection = client.create_collection(name=collection_name_faq)
+        collection = client.create_collection(
+            name=collection_name_faq,
+            embedding_function=ef
+        )
 
         df = pd.read_csv(path)
 
@@ -45,7 +49,11 @@ def ingest_faq_data(path):
 
 def get_relevant_qa(query):
     client = get_chroma_client()
-    collection = client.get_collection(name=collection_name_faq)
+
+    collection = client.get_collection(
+        name=collection_name_faq,
+        embedding_function=ef
+    )
 
     return collection.query(query_texts=[query], n_results=3)
 
@@ -53,7 +61,8 @@ def generate_answer(query, context):
     model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
     prompt = f"""
-Answer ONLY using the context. If not found say "I don't know".
+Answer ONLY using the context.
+If not found, say "I don't know".
 
 CONTEXT:
 {context}
@@ -76,7 +85,7 @@ def faq_chain(query):
         [r.get("answer", "") for r in result["metadatas"][0]]
     )
 
-    if not context:
+    if not context.strip():
         return "I don't know"
 
     return generate_answer(query, context)
