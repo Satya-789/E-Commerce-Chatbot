@@ -1,9 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 streamlit
 pandas
 numpy==1.26.4
-chromadb==0.4.24
-sentence-transformers==2.2.2
-transformers==4.41.2
+
+# ML stack (IMPORTANT ORDER)
 torch==2.2.2
+transformers==4.41.2
+sentence-transformers==2.2.2
+
+chromadb==0.4.24
 groq
 python-dotenv
