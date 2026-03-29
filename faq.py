@@ -11,6 +11,17 @@ from dotenv import load_dotenv
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 os.environ["CHROMA_TELEMETRY"] = "False"
 
+import logging
+import warnings
+
+# Disable warnings
+warnings.filterwarnings("ignore")
+
+# Silence chroma + transformers logs
+logging.getLogger("chromadb").setLevel(logging.ERROR)
+logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
+logging.getLogger("transformers").setLevel(logging.ERROR)
+
 # ---------- Load Environment ----------
 load_dotenv()
 
