@@ -1,7 +1,6 @@
 streamlit
 pandas
-chromadb
-sentence-transformers
+chromadb==0.4.24
+sentence-transformers==2.2.2
 groq
 python-dotenv
-semantic-router==0.0.27
