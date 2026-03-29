@@ -1,42 +1,34 @@
 import os
 import streamlit as st
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from groq import Groq
 import pandas as pd
 from dotenv import load_dotenv
-
-
-# 🔥 Disable telemetry completely
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
-os.environ["CHROMA_TELEMETRY"] = "False"
-
 import logging
 import warnings
 
-# Disable warnings
+# ---------- Silence warnings (clean logs) ----------
 warnings.filterwarnings("ignore")
-
-# Silence chroma + transformers logs
 logging.getLogger("chromadb").setLevel(logging.ERROR)
-logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
-logging.getLogger("transformers").setLevel(logging.ERROR)
 
-# ---------- Load Environment ----------
+# ---------- Disable telemetry ----------
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY"] = "False"
+
+# ---------- Load environment ----------
 load_dotenv()
 
-# ---------- Embedding Function ----------
-ef = embedding_functions.SentenceTransformerEmbeddingFunction(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+# ---------- Embedding (NO sentence-transformers) ----------
+ef = DefaultEmbeddingFunction()
 
-# ---------- Cached Chroma Client (IMPORTANT FIX) ----------
+# ---------- Cached Chroma Client (FIXED) ----------
 @st.cache_resource
 def get_chroma_client():
     return chromadb.Client(
         chromadb.config.Settings(
             persist_directory="./chroma_db",
-            anonymized_telemetry=False   # ✅ disable telemetry error
+            anonymized_telemetry=False
         )
     )
 
@@ -113,7 +105,6 @@ QUESTION:
 def faq_chain(query):
     result = get_relevant_qa(query)
 
-    # Safe extraction
     context = "\n\n".join(
         [r.get("answer", "") for r in result["metadatas"][0]]
     )
