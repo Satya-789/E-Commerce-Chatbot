@@ -1,8 +1,7 @@
 streamlit
 pandas
-pandasql
-python-dotenv
-groq
-semantic-router[local]
 chromadb
-sentence_transformers
+sentence-transformers
+groq
+python-dotenv
+semantic-router
