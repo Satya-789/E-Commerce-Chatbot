@@ -4,95 +4,50 @@ from sql import sql_chain
 from pathlib import Path
 from router import get_route
 
-# ---------- Page Config ----------
-st.set_page_config(
-    page_title="E-commerce Chatbot",
-    page_icon="🛒",
-    layout="centered"
-)
+st.set_page_config(page_title="E-commerce Bot", page_icon="🛒")
 
-# ---------- Load FAQ Data ----------
+# ---------- Load FAQ ----------
 faqs_path = Path(__file__).parent / "resources/faq_data.csv"
 
 @st.cache_resource
 def load_data():
-    try:
-        ingest_faq_data(faqs_path)
-    except Exception as e:
-        st.error(f"Error loading FAQ data: {e}")
+    ingest_faq_data(faqs_path)
 
 load_data()
 
 # ---------- Routing ----------
 def ask(query):
-    try:
-        route = get_route(query)
+    route = get_route(query)
 
-        # DEBUG (optional)
-        # st.sidebar.write(f"Route: {route}")
-
-        if route == 'faq':
-            return faq_chain(query)
-
-        elif route == 'sql':
-            return sql_chain(query)
-
-        else:
-            return "🤖 I can help with products, orders, and store policies."
-
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
+    if route == "faq":
+        return faq_chain(query)
+    elif route == "sql":
+        return sql_chain(query)
+    else:
+        return "I can help with products, orders, and policies."
 
 # ---------- UI ----------
 st.title("🛒 E-commerce AI Assistant")
-st.caption("Ask about products, payments, orders, and policies")
 
-# ---------- Sidebar ----------
-with st.sidebar:
-    st.header("⚙️ Options")
+query = st.chat_input("Ask something...")
 
-    if st.button("🗑️ Clear Chat"):
-        st.session_state.messages = []
-        st.rerun()
-
-    st.markdown("---")
-    st.markdown("**Try asking:**")
-    st.markdown("- Nike shoes under 3000")
-    st.markdown("- What is your return policy?")
-    st.markdown("- Track my order")
-
-# ---------- Chat Input ----------
-query = st.chat_input("Type your question...")
-
-# ---------- Chat Memory ----------
 if "messages" not in st.session_state:
-    st.session_state["messages"] = []
+    st.session_state.messages = []
 
-# ---------- Display Chat ----------
-for message in st.session_state.messages:
-    with st.chat_message(message['role']):
-        st.markdown(message['content'])
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# ---------- Handle Query ----------
 if query:
-    # Show user message
+    st.session_state.messages.append({"role": "user", "content": query})
+
     with st.chat_message("user"):
         st.markdown(query)
 
-    st.session_state.messages.append({
-        "role": "user",
-        "content": query
-    })
-
-    # Generate response
     with st.spinner("Thinking..."):
         response = ask(query)
 
-    # Show assistant message
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
     with st.chat_message("assistant"):
         st.markdown(response)
-
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": response
-    })
