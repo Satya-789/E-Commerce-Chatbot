@@ -4,4 +4,4 @@ chromadb
 sentence-transformers
 groq
 python-dotenv
-semantic-router
+semantic-router==0.0.27
