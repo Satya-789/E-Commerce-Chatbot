@@ -1,11 +1,10 @@
 import os
 
-# ---------- 🔥 MUST BE FIRST (disable telemetry) ----------
+# Disable telemetry FIRST
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 os.environ["CHROMA_TELEMETRY"] = "False"
 os.environ["POSTHOG_DISABLED"] = "1"
 
-# ---------- Imports ----------
 import streamlit as st
 import chromadb
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
@@ -15,42 +14,26 @@ from dotenv import load_dotenv
 import logging
 import warnings
 
-# ---------- Silence logs ----------
 warnings.filterwarnings("ignore")
 logging.getLogger("chromadb").setLevel(logging.CRITICAL)
-logging.getLogger("posthog").setLevel(logging.CRITICAL)
 
-# ---------- Load env ----------
 load_dotenv()
 
-# ---------- Embedding ----------
 ef = DefaultEmbeddingFunction()
 
-# ---------- Cached Chroma Client ----------
 @st.cache_resource
 def get_chroma_client():
-    return chromadb.Client(
-        chromadb.config.Settings(
-            persist_directory="./chroma_db",
-            anonymized_telemetry=False
-        )
-    )
+    return chromadb.Client()
 
-# ---------- Groq Client ----------
 groq_client = Groq()
 collection_name_faq = "faqs"
 
-# ---------- Ingest ----------
 def ingest_faq_data(path):
-    chroma_client = get_chroma_client()
-
-    existing = [c.name for c in chroma_client.list_collections()]
+    client = get_chroma_client()
+    existing = [c.name for c in client.list_collections()]
 
     if collection_name_faq not in existing:
-        collection = chroma_client.create_collection(
-            name=collection_name_faq,
-            embedding_function=ef
-        )
+        collection = client.create_collection(name=collection_name_faq)
 
         df = pd.read_csv(path)
 
@@ -60,31 +43,17 @@ def ingest_faq_data(path):
             ids=[str(i) for i in range(len(df))]
         )
 
-        chroma_client.persist()
-
-# ---------- Retrieve ----------
 def get_relevant_qa(query):
-    chroma_client = get_chroma_client()
+    client = get_chroma_client()
+    collection = client.get_collection(name=collection_name_faq)
 
-    collection = chroma_client.get_collection(
-        name=collection_name_faq,
-        embedding_function=ef
-    )
+    return collection.query(query_texts=[query], n_results=3)
 
-    return collection.query(
-        query_texts=[query],
-        n_results=3
-    )
-
-# ---------- Generate Answer ----------
 def generate_answer(query, context):
     model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
     prompt = f"""
-You are an ecommerce assistant.
-
-Answer ONLY using the context.
-If not found, say "I don't know".
+Answer ONLY using the context. If not found say "I don't know".
 
 CONTEXT:
 {context}
@@ -95,13 +64,11 @@ QUESTION:
 
     completion = groq_client.chat.completions.create(
         model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
+        messages=[{"role": "user", "content": prompt}]
     )
 
     return completion.choices[0].message.content
 
-# ---------- Chain ----------
 def faq_chain(query):
     result = get_relevant_qa(query)
 
@@ -109,7 +76,7 @@ def faq_chain(query):
         [r.get("answer", "") for r in result["metadatas"][0]]
     )
 
-    if not context.strip():
+    if not context:
         return "I don't know"
 
     return generate_answer(query, context)
